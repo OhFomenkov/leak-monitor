@@ -1,0 +1,33 @@
+# --- Виртуальное окружение ---
+venv/
+env/
+ENV/
+
+# --- Секретные данные ---
+.env
+
+# --- Компиляция Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- IDE и системные файлы (PyCharm и VSCode) ---
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# --- Телеграм сессии ---
+*.session
+*.session-journal
+
+# --- Тесты и кэши ---
+.pytest_cache/
+
+# --- Логи ---
+logs/
+*.log
+
+# --- База данных ---
+*.sql
+*.dump

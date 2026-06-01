@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinel Monitor | Settings</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* Стилизация карточек конфигурации */
+        .settings-card {
+            background-color: #0b0f19 !important;
+            border: 1px solid #1e293b !important;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .form-control, .form-select {
+            background-color: #111827 !important;
+            border-color: #1e293b !important;
+            color: #f8fafc !important;
+        }
+        .form-control:focus, .form-select:focus {
+            background-color: #111827 !important;
+            border-color: #3b82f6 !important;
+            color: #f8fafc !important;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        .form-label {
+            color: #94a3b8;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .text-muted-custom {
+            color: #64748b;
+        }
+        /* Унификация таблиц */
+        .table th {
+            color: #64748b !important;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            padding: 12px 16px;
+            border-bottom: 1px solid #1e293b !important;
+            background-color: transparent !important; /* <-- Вот эта строчка уберет белую заливку */
+        }
+        .table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #1e293b !important;
+            background-color: transparent !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="d-flex">
+        <nav class="sidebar">
+            <div class="navbar-brand"><i class="bi bi-shield-lock me-2"></i> SENTINEL</div>
+            <div class="nav flex-column mt-4">
+                <a href="/" class="nav-link"><i class="bi bi-grid-1x2 me-2"></i> Дашборд</a>
+                <a href="/incidents" class="nav-link"><i class="bi bi-shield-exclamation me-2"></i> Инциденты</a>
+                <a href="/staff" class="nav-link"><i class="bi bi-people me-2"></i> Персонал</a>
+                <a href="/settings" class="nav-link active"><i class="bi bi-gear me-2"></i> Настройки</a>
+            </div>
+            <div class="sidebar-footer">
+                <a href="#" class="nav-link text-danger"><i class="bi bi-power me-2"></i> Выход</a>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header class="mb-4">
+                <h2 class="text-white fw-bold mb-1">Панель управления настройками</h2>
+                <p class="text-muted small">Конфигурация модулей скрапинга, парсеров и систем мгновенного оповещения</p>
+            </header>
+
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="settings-card shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h5 class="text-white fw-bold mb-1"><i class="bi bi-browser-chrome me-2 text-primary"></i>Источники веб-скрапера</h5>
+                                <p class="text-muted small mb-0">База OSINT-ресурсов и репозиториев для проверки утечек</p>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-success btn-sm px-3" id="btnStartScraper" onclick="triggerScraper()">
+                                    <i class="bi bi-play-fill me-1"></i> Запустить сканер
+                                </button>
+                                <button class="btn btn-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#addSourceModal">
+                                    <i class="bi bi-plus-lg me-1"></i> Добавить URL
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0" id="sourcesTable" style="color: #f8fafc !important;">
+                                <thead>
+                                    <tr>
+                                        <th>НАЗВАНИЕ РЕСУРСА</th>
+                                        <th>ЦЕЛЕВОЙ URL / АДРЕС ИСТОЧНИКА</th>
+                                        <th class="text-end">ДЕЙСТВИЯ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sourcesTableBody">
+                                    {% if sources %}
+                                        {% for source in sources %}
+                                        <tr>
+                                            <td>
+                                                <span class="text-white fw-semibold">{{ source[1] }}</span>
+                                            </td>
+                                            <td>
+                                                <code class="text-info">{{ source[2] }}</code>
+                                            </td>
+                                            <td class="text-end">
+                                                <button class="btn btn-outline-light btn-sm me-1 p-1 px-2" style="color: #94a3b8; border-color: #1e293b;"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#addSourceModal"
+                                                        data-id="{{ source[0] }}"
+                                                        data-name="{{ source[1] }}"
+                                                        data-url="{{ source[2] }}">
+                                                    <i class="bi bi-pencil small"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger btn-sm p-1 px-2" style="border-color: #1e293b;"
+                                                        onclick="deleteSource(this, {{ source[0] }})">
+                                                    <i class="bi bi-trash small"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="3" class="text-center text-muted py-5">
+                                                <i class="bi bi-globe2 display-6 d-block mb-2 text-secondary"></i>
+                                                <span class="small">Список источников пуст. Добавьте первый URL для веб-скрапера.</span>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 mb-4">
+                    <div class="settings-card shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h5 class="text-white fw-bold mb-1"><i class="bi bi-telegram me-2 text-info"></i>Настройка Telegram коллектора</h5>
+                                <p class="text-muted small mb-0">База Telegram-каналов, чатов и групп для мониторинга утечек учетных записей</p>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-success btn-sm px-3" id="btnStartTgScraper" onclick="triggerTgScraper()">
+                                    <i id="btnIcon" class="bi bi-play-fill me-1"></i>
+                                    <span id="btnText">Запустить сканер</span>
+                                </button>
+                                <button class="btn btn-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#addTgSourceModal">
+                                    <i class="bi bi-plus-lg me-1"></i> Добавить канал
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0" id="tgSourcesTable" style="color: #f8fafc !important;">
+                                <thead>
+                                    <tr>
+                                        <th>НАЗВАНИЕ КАНАЛА</th>
+                                        <th>TARGET CHAT ID</th>
+                                        <th class="text-end">ДЕЙСТВИЯ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tgSourcesTableBody">
+                                    {% if tg_sources %}
+                                        {% for source in tg_sources %}
+                                        <tr>
+                                            <td>
+                                                <span class="text-white fw-semibold">{{ source[1] }}</span>
+                                            </td>
+                                            <td>
+                                                <code class="text-info">{{ source[2] }}</code>
+                                            </td>
+                                            <td class="text-end">
+                                                <button class="btn btn-outline-light btn-sm me-1 p-1 px-2" style="color: #94a3b8; border-color: #1e293b;"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#editTgSourceModal"
+                                                        data-id="{{ source[0] }}"
+                                                        data-name="{{ source[1] }}"
+                                                        data-chatid="{{ source[2] }}">
+                                                    <i class="bi bi-pencil small"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger btn-sm p-1 px-2" style="border-color: #1e293b;"
+                                                        onclick="deleteTgSource(this, {{ source[0] }})">
+                                                    <i class="bi bi-trash small"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="3" class="text-center text-muted py-5">
+                                                <i class="bi bi-chat-left-dots display-6 d-block mb-2 text-secondary"></i>
+                                                <span class="small">Список Telegram-ресурсов пуст. Добавьте первый канал для мониторинга.</span>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal fade" id="addSourceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-secondary" style="background-color: #0b0f19; color: #f8fafc;">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white fw-bold" id="modalTitle">Добавить новый источник</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="sourceForm" action="/settings/save-source" method="POST">
+                    <div class="modal-body">
+                        <input type="hidden" id="sourceId" name="source_id" value="">
+                        <div class="mb-3">
+                            <label for="sourceName" class="form-label">Название ресурса</label>
+                            <input type="text" class="form-control" id="sourceName" name="source_name" required placeholder="Например, RaidForums Dump Mirror">
+                        </div>
+                        <div class="mb-3">
+                            <label for="sourceUrl" class="form-label">URL-адрес API / Списки утечек</label>
+                            <input type="url" class="form-control" id="sourceUrl" name="source_url" required placeholder="https://domain.com/dump.json">
+                        </div>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-primary btn-sm">Сохранить источник</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addTgSourceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-secondary text-white" style="background-color: #0b0f19 !important;">
+                <div class="modal-header border-bottom border-secondary">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2 text-primary"></i>Добавить Telegram канал</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="/settings/add-tg-source" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">Название канала / ресурса</label>
+                            <input type="text" class="form-control bg-dark border-secondary text-white" name="channel_name" required placeholder="Например: ShadowForge Dumps">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">Target Chat ID или Юзернейм</label>
+                            <input type="text" class="form-control bg-dark border-secondary text-white" name="chat_id" required placeholder="Например: -100198472615 или @leak_dump">
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top border-secondary">
+                        <button type="button" class="btn btn-outline-light btn-sm px-3" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-primary btn-sm px-4">Добавить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editTgSourceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-secondary text-white" style="background-color: #0b0f19 !important;">
+                <div class="modal-header border-bottom border-secondary">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2 text-info"></i>Редактировать Telegram источник</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editTgSourceId">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Название канала / ресурса</label>
+                        <input type="text" class="form-control bg-dark border-secondary text-white" id="editTgChannelName">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Target Chat ID или Юзернейм</label>
+                        <input type="text" class="form-control bg-dark border-secondary text-white" id="editTgChatId">
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-secondary">
+                    <button type="button" class="btn btn-outline-light btn-sm px-3" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-info btn-sm px-4" onclick="saveTgSourceEdit()">Сохранить изменения</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        /* ==================== ЛОГИКА ВЕБ-СКРАПЕРА ==================== */
+
+        function triggerScraper() {
+            const btn = document.getElementById('btnStartScraper');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Сканирую источники...';
+
+            fetch('/settings/run-scraper', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert('📡 ' + data.message);
+                        location.reload();
+                    } else {
+                        alert('❌ ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Ошибка сети: не удалось запустить сканирование');
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-play-fill me-1"></i> Запустить сканер';
+                });
+        }
+
+        function deleteSource(button, id) {
+            if (confirm("Вы уверены, что хотите удалить этот источник из ротации скрапера?")) {
+                fetch('/settings/delete-source/' + id, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        const row = button.closest('tr');
+                        row.style.transition = 'all 0.3s ease';
+                        row.style.opacity = '0';
+                        setTimeout(() => row.remove(), 300);
+                    } else {
+                        alert('❌ ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Ошибка сети: не удалось связаться с сервером');
+                });
+            }
+        }
+
+        // Перехват открытия модалки редактирования Веб-источников через Data-атрибуты
+        document.getElementById('addSourceModal').addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            if (!button || !button.hasAttribute('data-id')) return; // Если открыли кнопкой "Добавить URL"
+
+            const id = button.getAttribute('data-id');
+            const name = button.getAttribute('data-name');
+            const url = button.getAttribute('data-url');
+
+            document.getElementById('modalTitle').innerText = "Редактировать источник";
+            document.getElementById('sourceId').value = id;
+            document.getElementById('sourceName').value = name;
+            document.getElementById('sourceUrl').value = url;
+        });
+
+        document.getElementById('addSourceModal').addEventListener('hidden.bs.modal', function () {
+            document.getElementById('modalTitle').innerText = "Добавить новый источник";
+            document.getElementById('sourceId').value = "";
+            document.getElementById('sourceForm').reset();
+        });
+
+
+        /* ==================== ЛОГИКА TELEGRAM КОЛЛЕКТОРА ==================== */
+
+        function triggerTgScraper() {
+            const btn = document.getElementById('btnStartTgScraper');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Парсинг Telegram...';
+
+            fetch('/settings/run-tg-scraper', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert('🤖 ' + data.message);
+                        location.reload();
+                    } else {
+                        alert('❌ ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Ошибка сети: не удалось запустить Telegram коллектор');
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-play-fill me-1"></i> Запустить сканер';
+                });
+        }
+
+        function deleteTgSource(button, id) {
+            if (confirm("Вы уверены, что хотите исключить этот Telegram-канал из базы коллектора?")) {
+                fetch('/settings/delete-tg-source/' + id, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        const row = button.closest('tr');
+                        row.style.transition = 'all 0.3s ease';
+                        row.style.opacity = '0';
+                        setTimeout(() => {
+                            row.remove();
+                            if (document.querySelectorAll('#tgSourcesTableBody tr').length === 0) {
+                                location.reload();
+                            }
+                        }, 300);
+                    } else {
+                        alert('❌ ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Ошибка сети при попытке удаления');
+                });
+            }
+        }
+
+        // Перехват открытия модалки редактирования Telegram через Data-атрибуты
+        document.getElementById('editTgSourceModal').addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const id = button.getAttribute('data-id');
+            const name = button.getAttribute('data-name');
+            const chatId = button.getAttribute('data-chatid');
+
+            document.getElementById('editTgSourceId').value = id;
+            document.getElementById('editTgChannelName').value = name;
+            document.getElementById('editTgChatId').value = chatId;
+        });
+
+        function saveTgSourceEdit() {
+            const id = document.getElementById('editTgSourceId').value;
+            const name = document.getElementById('editTgChannelName').value.trim();
+            const chatId = document.getElementById('editTgChatId').value.trim();
+
+            if (!name || !chatId) {
+                alert('Пожалуйста, заполните все поля!');
+                return;
+            }
+
+            fetch('/settings/edit-tg-source/' + id, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ channel_name: name, chat_id: chatId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    location.reload();
+                } else {
+                    alert('❌ ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ошибка сети при сохранении изменений');
+            });
+        }
+
+        // Функция для проверки статуса и обновления кнопки
+        async function updateTgButton() {
+            const btn = document.getElementById('btnStartTgScraper');
+            const icon = document.getElementById('btnIcon');
+            const text = document.getElementById('btnText');
+
+            const res = await fetch('/settings/status-tg-scraper');
+            const data = await res.json();
+
+            if (data.running) {
+                // Состояние: Бот работает (Красная кнопка)
+                btn.className = "btn btn-outline-danger btn-sm px-3";
+                icon.className = "bi bi-stop-fill me-1";
+                text.innerText = "Остановить сканирование";
+            } else {
+                // Состояние: Бот выключен (Зеленая кнопка)
+                btn.className = "btn btn-outline-success btn-sm px-3";
+                icon.className = "bi bi-play-fill me-1";
+                text.innerText = "Запустить сканер";
+            }
+        }
+
+        // Функция, которую ты уже вызываешь по onclick
+        async function triggerTgScraper() {
+            const btn = document.getElementById('btnStartTgScraper');
+            const isRunning = btn.className.includes('btn-outline-danger');
+
+            // Выбираем правильный эндпоинт
+            const url = isRunning ? '/settings/stop-tg-scraper' : '/settings/run-tg-scraper';
+
+            const response = await fetch(url, { method: 'POST' });
+            const data = await response.json();
+
+            alert(data.message); // Показывает PID при запуске или статистику при остановке
+            updateTgButton();    // Обновляем вид кнопки сразу после действия
+        }
+
+        // Вызываем обновление при каждой загрузке страницы
+        document.addEventListener('DOMContentLoaded', updateTgButton);
+
+
+    </script>
+</body>
+</html>
