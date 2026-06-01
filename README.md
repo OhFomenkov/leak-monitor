@@ -27,7 +27,8 @@ cd leak-monitor
 # Создание виртуального окружения
 python -m venv venv
 venv\Scripts\activate  # Для Windows
-
+Если возникла ошибка, то предварительно используйте:
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
 # Установка зависимостей
 pip install -r requirements.txt
 ```
