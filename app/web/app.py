@@ -172,36 +172,6 @@ def delete_source(source_id):
 # В самый верх файла к остальным импортам
 from app.core.web_scrp import WebScraper
 
-@app.route('/settings/save-source', methods=['POST'])
-def save_source():
-    # Получаем данные из формы
-    source_id = request.form.get('source_id') # Это поле скрыто в вашей форме
-    name = request.form.get('source_name')
-    url = request.form.get('source_url')
-
-    try:
-        with db.conn.cursor() as cur:
-            if source_id and source_id.strip(): 
-                # Если передан ID, обновляем существующую запись
-                cur.execute(
-                    "UPDATE scraper_sources SET source_name = %s, source_url = %s WHERE id = %s;",
-                    (name, url, source_id)
-                )
-                flash(f"Источник '{name}' успешно обновлен.")
-            else:
-                # Если ID пустой, создаем новую запись
-                cur.execute(
-                    "INSERT INTO scraper_sources (source_name, source_url) VALUES (%s, %s);",
-                    (name, url)
-                )
-                flash(f"Источник '{name}' успешно добавлен.")
-            
-            db.conn.commit()
-    except Exception as e:
-        flash(f"Ошибка при работе с базой данных: {str(e)}", "danger")
-    
-    return redirect(url_for('settings_page'))
-
 
 @app.route('/settings/run-scraper', methods=['POST'])
 def run_scraper_manual():
@@ -259,7 +229,28 @@ def edit_tg_source(source_id):
 
 import os
 from flask import jsonify
-from app.core.tg_collector import start_bot_process
+import subprocess
+import sys
+import os
+
+
+def start_bot_process():
+    # 1. Получаем путь к папке, где лежит app.py (корень проекта)
+    # Если app.py лежит в корне, используем os.getcwd() или __file__
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # 2. Формируем путь к файлу tg_collector.py
+    # Он лежит в app/core/tg_collector.py
+    script_path = os.path.join(base_dir, '..', 'core', 'tg_collector.py')
+
+    # 3. Проверка существования файла
+    if not os.path.exists(script_path):
+        raise FileNotFoundError(f"Файл бота не найден по пути: {script_path}")
+
+    # 4. Запуск
+    process = subprocess.Popen([sys.executable, script_path])
+    return process.pid
+
 start_counts = {}
 
 @app.route('/settings/run-tg-scraper', methods=['POST'])
@@ -305,6 +296,37 @@ def stop_tg_scraper():
 
             return {"status": "stopped", "message": f"Сканер остановлен. Найдено утечек за сессию: {diff}"}
     return {"status": "error", "message": "Сканер не запущен"}, 400
+
+
+@app.route('/settings/save-source', methods=['POST'])
+def save_source():
+    # Получаем данные из формы
+    source_id = request.form.get('source_id')  # Это поле скрыто в вашей форме
+    name = request.form.get('source_name')
+    url = request.form.get('source_url')
+
+    try:
+        with db.conn.cursor() as cur:
+            if source_id and source_id.strip():
+                # Если передан ID, обновляем существующую запись
+                cur.execute(
+                    "UPDATE scraper_sources SET source_name = %s, source_url = %s WHERE id = %s;",
+                    (name, url, source_id)
+                )
+                flash(f"Источник '{name}' успешно обновлен.")
+            else:
+                # Если ID пустой, создаем новую запись
+                cur.execute(
+                    "INSERT INTO scraper_sources (source_name, source_url) VALUES (%s, %s);",
+                    (name, url)
+                )
+                flash(f"Источник '{name}' успешно добавлен.")
+
+            db.conn.commit()
+    except Exception as e:
+        flash(f"Ошибка при работе с базой данных: {str(e)}", "danger")
+
+    return redirect(url_for('settings_page'))
 
 
 @app.route('/settings/add-tg-source', methods=['POST'])
