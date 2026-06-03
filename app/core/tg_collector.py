@@ -36,15 +36,15 @@ def get_monitored_chat_ids():
     try:
         with db.conn.cursor() as cur:
             cur.execute("SELECT chat_id FROM telegram_sources;")
-            return [int(row[0]) for row in cur.fetchall()]
+            # Приводим к строкам для корректного сравнения
+            return [str(row[0]) for row in cur.fetchall()]
     except Exception as e:
-        print(f"[!] Ошибка БД: {e}", file=sys.stderr)
         return []
 
 
 @dp.channel_post()
 async def handle_channel_post(message: Message):
-    current_chat_id = message.chat.id
+    current_chat_id = str(message.chat.id)
     monitored_ids = get_monitored_chat_ids()
 
     if current_chat_id in monitored_ids:
