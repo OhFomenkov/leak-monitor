@@ -172,6 +172,36 @@ def delete_source(source_id):
 # В самый верх файла к остальным импортам
 from app.core.web_scrp import WebScraper
 
+@app.route('/settings/save-source', methods=['POST'])
+def save_source():
+    # Получаем данные из формы
+    source_id = request.form.get('source_id') # Это поле скрыто в вашей форме
+    name = request.form.get('source_name')
+    url = request.form.get('source_url')
+
+    try:
+        with db.conn.cursor() as cur:
+            if source_id and source_id.strip(): 
+                # Если передан ID, обновляем существующую запись
+                cur.execute(
+                    "UPDATE scraper_sources SET source_name = %s, source_url = %s WHERE id = %s;",
+                    (name, url, source_id)
+                )
+                flash(f"Источник '{name}' успешно обновлен.")
+            else:
+                # Если ID пустой, создаем новую запись
+                cur.execute(
+                    "INSERT INTO scraper_sources (source_name, source_url) VALUES (%s, %s);",
+                    (name, url)
+                )
+                flash(f"Источник '{name}' успешно добавлен.")
+            
+            db.conn.commit()
+    except Exception as e:
+        flash(f"Ошибка при работе с базой данных: {str(e)}", "danger")
+    
+    return redirect(url_for('settings_page'))
+
 
 @app.route('/settings/run-scraper', methods=['POST'])
 def run_scraper_manual():
