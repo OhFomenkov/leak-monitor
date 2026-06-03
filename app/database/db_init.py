@@ -38,21 +38,21 @@ def init_database():
 
             CREATE TABLE IF NOT EXISTS scraper_sources (
                 id SERIAL PRIMARY KEY,
-                source_name VARCHAR(255),
-                source_url TEXT
+                source_name VARCHAR(255) UNIQUE,
+                source_url TEXT UNIQUE
             );
 
             CREATE TABLE IF NOT EXISTS staff_users (
                 id SERIAL PRIMARY KEY,
                 fio VARCHAR(255),
-                email VARCHAR(255),
+                email VARCHAR(255) UNIQUE,
                 department VARCHAR(100)
             );
 
             CREATE TABLE IF NOT EXISTS telegram_sources (
                 id SERIAL PRIMARY KEY,
-                channel_name VARCHAR(255),
-                chat_id VARCHAR(100),
+                channel_name VARCHAR(255) UNIQUE,
+                chat_id VARCHAR(100) UNIQUE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
