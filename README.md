@@ -24,31 +24,12 @@
 
 ## Быстрый запуск
 
-### 1. Подготовка
-
-#### a. Клонирование репозитория
-``` < > bash
+#### 1. Клонирование репозитория
+``` 
 git clone https://github.com/OhFomenkov/leak-monitor.git
 cd leak-monitor
 ```
 
-#### b. Создание виртуального окружения
-```
-python -m venv venv
-```
-Для Git Bash:
-```
-source venv/Scripts/activate
-```
-Для Windows PowerShell:
-```
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
-venv\Scripts\activate  
-```
-#### c. Установка зависимостей
-```
-pip install -r requirements.txt
-```
 ### 2. Конфигурация
 
 Создайте файл .env в корне проекта на основе .env.example и укажите необходимые данные:\
@@ -59,22 +40,12 @@ Telegram API Credentials (BOT_TOKEN)\
 ```
 python -c "import secrets; print(secrets.token_hex(32))"
 ```
-### 3. Инициализация базы данных
 
-#### a. Создание таблиц
-```
-python -m app.database.db_init
-```
-#### b. Наполнение демо-данными для демонстрации(по желанию)
-```
-python scripts/db_seed.py
-```
-### 4. Запуск
+### 3. Автоматическая настройка и запуск
 
-#### Запуск проекта
-```
-python run.py
-```
+Просто запустите скрипты в корне проекта
+- **setup.bat** — настройка окружения, установка зависимостей и инициализация БД (выполняется один раз).
+- **start.bat** — запуск всей системы (веб-интерфейс).
 
 ## Порядок проверки функционала
 
