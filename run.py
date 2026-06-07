@@ -1,14 +1,6 @@
-import argparse
-# ... импорты ...
+from app.web.app import app
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", choices=["bot", "web"], required=True)
-    args = parser.parse_args()
-
-    if args.mode == "bot":
-        # Вызов логики бота
-        pass
-    elif args.mode == "web":
-        # Вызов app.run()
-        pass
+    # Просто запускаем Flask приложение
+    print("--- Запуск Sentinel Monitor ---")
+    app.run(debug=True, port=5000)
