@@ -27,7 +27,7 @@
 ### 1. Подготовка
 
 #### a. Клонирование репозитория
-```
+``` < > bash
 git clone https://github.com/OhFomenkov/leak-monitor.git
 cd leak-monitor
 ```
