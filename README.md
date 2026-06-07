@@ -33,13 +33,9 @@ cd leak-monitor
 ### 2. Конфигурация
 
 Создайте файл .env в корне проекта на основе .env.example и укажите необходимые данные:\
-Данные для подключения к PostgreSQL (DB_NAME, DB_USER, DB_PASSWORD, и т.д.)\
-Telegram API Credentials (BOT_TOKEN)\
-Секретный ключ (SECRET_KEY) - для подписи сессии(Cookies)\
-Для генерации секретного ключа используйте:
-```
-python -c "import secrets; print(secrets.token_hex(32))"
-```
+- База данных: DB_NAME, DB_USER, DB_PASSWORD, и т.д.
+- Telegram: BOT_TOKEN
+- Безопасность: SECRET_KEY (для генерации ключа используйте: python -c "import secrets; print(secrets.token_hex(32))")
 
 ### 3. Автоматическая настройка и запуск
 
